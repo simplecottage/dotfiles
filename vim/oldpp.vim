@@ -1,14 +1,3 @@
-" Vim color file
-" Maintainer: David Ne\v{c}as (Yeti) <yeti@physics.muni.cz>
-" Last Change: 2003-04-23
-" URL: http://trific.ath.cx/Ftp/vim/colors/peachpuff.vim
-
-" This color scheme uses a peachpuff background (what you've expected when it's
-" called peachpuff?).
-"
-" Note: Only GUI colors differ from default, on terminal it's just `light'.
-
-" First remove all existing highlighting.
 set background=light
 hi clear
 if exists("syntax_on")
