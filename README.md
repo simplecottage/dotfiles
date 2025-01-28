@@ -1,2 +1,3 @@
 # dotfiles
-List of dotfiles
+
+emacs+vim+hyprland+waybar
