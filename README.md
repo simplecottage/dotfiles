@@ -23,3 +23,6 @@ chezmoi update
 - Hyprland/Waybar: Arch-only
 - Doom Emacs/Vim: All systems
 
+### TODO
+
+Separate lock conf
