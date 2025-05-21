@@ -1,0 +1,208 @@
+#+TITLE: Emacs Configuration
+#+AUTHOR: sdcvb
+#+PROPERTY: header-args:emacs-lisp :tangle yes
+#+OPTIONS: toc:2
+
+* Straight
+#+begin_src emacs-lisp
+(defvar bootstrap-version)
+(let ((bootstrap-file
+       (expand-file-name
+        "straight/repos/straight.el/bootstrap.el"
+        (or (bound-and-true-p straight-base-dir)
+            user-emacs-directory)))
+      (bootstrap-version 7))
+  (unless (file-exists-p bootstrap-file)
+    (with-current-buffer
+        (url-retrieve-synchronously
+         "https://raw.githubusercontent.com/radian-software/straight.el/develop/install.el"
+         'silent 'inhibit-cookies)
+      (goto-char (point-max))
+      (eval-print-last-sexp)))
+  (load bootstrap-file nil 'nomessage))
+#+end_src
+
+** Install use-package
+#+begin_src emacs-lisp
+(straight-use-package 'use-package)
+#+end_src
+
+** Configure straight as default packet manager
+#+begin_src emacs-lisp
+(use-package straight
+  :custom
+  (straight-use-package-by-default t))
+#+end_src
+
+* Evil Mode
+Evil provides vim keybindings in Emacs.
+
+#+begin_src emacs-lisp
+(use-package evil
+  :config
+  (evil-mode 1))
+#+end_src
+
+* Completion
+** Vertico
+Vertico provides a vertical completion UI.
+
+#+begin_src emacs-lisp
+(use-package vertico
+  :init
+  (vertico-mode)
+  :custom
+  (vertico-cycle t)
+  :custom-face
+  (vertico-current ((t (:background "#4f5b66" :foreground "#ffffff")))))
+#+end_src
+
+** Corfu
+In-buffer completion UI.
+
+#+begin_src emacs-lisp
+  (use-package corfu
+    :init
+    (global-corfu-mode)
+    :custom
+    (corfu-auto t)          ;; enable auto completion
+    (corfu-cycle t)         ;; cycle through candidates
+    (corfu-preselect 'first))
+#+end_src
+
+** Cape
+Additional completion sources for corfu.
+
+#+begin_src emacs-lisp
+  (use-package cape
+    :init
+    ;; Add to the global default
+    (add-to-list 'completion-at-point-functions #'cape-dabbrev)
+    (add-to-list 'completion-at-point-functions #'cape-file))
+#+end_src
+
+** Marginalia
+Rich annotations for completion candidates.
+
+#+begin_src emacs-lisp
+  (use-package marginalia
+    :init
+    (marginalia-mode))
+#+end_src
+
+** Consult
+Enhanced commands using completion.
+
+#+begin_src emacs-lisp
+  (use-package consult
+    :bind
+    (("C-s" . consult-line)
+     ("C-x b" . consult-buffer)
+     ("M-y" . consult-yank-pop)
+     ("M-g g" . consult-goto-line)))
+#+end_src
+
+** Orderless
+Flexible completion style.
+
+#+begin_src emacs-lisp
+  (use-package orderless
+    :custom
+    (completion-styles '(orderless basic))
+    (completion-category-overrides '((file (styles . (partial-completion))))))
+#+end_src
+
+** Which-key
+
+#+begin_src emacs-lisp
+  (use-package which-key
+    :init (which-key-mode)
+    :diminish which-key-mode)
+#+end_src
+
+** Projectile
+
+#+begin_src emacs-lisp
+  (use-package projectile
+    :diminish projectile-mode
+    :config (projectile-mode)
+    :bind-keymap
+    ("C-c p" . projectile-command-map)
+    :init
+    (when (file-directory-p "~/Documents/dev")
+      (setq projectile-project-search-path '("~/Documents/dev")))
+    (setq projectile-switch-project-action #'projectile-dired))
+#+end_src
+
+** Counsel-projectile
+
+#+begin_src emacs-lisp
+  (use-package counsel-projectile
+    :config (counsel-projectile-mode))
+#+end_src
+
+** Magit
+
+#+begin_src emacs-lisp
+  (use-package magit
+    :custom
+    (magit-display-buffer-function #'magit-display-buffer-same-window-execpt-diff-v1))
+#+end_src
+
+* User Interface
+Basic UI settings.
+
+#+begin_src emacs-lisp
+  (menu-bar-mode -1)
+  (scroll-bar-mode -1)
+  (tool-bar-mode -1)
+  (tooltip-mode -1)
+  (set-fringe-mode 10)
+
+  ;; Make ESC quit prompts
+  (global-set-key (kbd "<escape>") 'keyboard-escape-quit)
+#+end_src
+
+** Theme
+
+#+begin_src emacs-lisp
+  (add-to-list 'custom-theme-load-path "~/.config/emacs/themes/")
+  (load-theme 'brin t)
+#+end_src
+
+
+** Lines numbers
+
+#+begin_src emacs-lisp
+  (setq display-line-numbers-type 'relative)
+  (global-display-line-numbers-mode 1)
+  (dolist (mode '(term-mode-hook
+  		shell-mode-hook
+  		eshell-mode-hook))
+    (add-hook mode (lambda () (display-line-numbers-mode 0))))
+#+end_src
+
+* Modes
+
+** YAML Mode
+For YAML file syntax highlighting and editing.
+
+#+begin_src emacs-lisp
+(use-package yaml-mode
+  :mode ("\\.yml\\'" "\\.yaml\\'"))
+#+end_src
+
+** Terraform Mode
+
+#+begin_src emacs-lisp
+  (use-package terraform-mode
+    :straight t)
+#+end_src
+
+** Nix Mode
+
+#+begin_src emacs-lisp
+  (use-package nix-mode
+    :mode "\\.nix\\'")
+#+end_src
+
