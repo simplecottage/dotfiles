@@ -1,46 +1,80 @@
 #+TITLE: Emacs Configuration
 #+AUTHOR: sdcvb
-#+PROPERTY: header-args:emacs-lisp :tangle yes
+#+PROPERTY: header-args:emacs-lisp :tangle ~/.config/emacs/config.el
 #+OPTIONS: toc:2
 
 * Straight
 #+begin_src emacs-lisp
-(defvar bootstrap-version)
-(let ((bootstrap-file
-       (expand-file-name
-        "straight/repos/straight.el/bootstrap.el"
-        (or (bound-and-true-p straight-base-dir)
-            user-emacs-directory)))
-      (bootstrap-version 7))
-  (unless (file-exists-p bootstrap-file)
-    (with-current-buffer
-        (url-retrieve-synchronously
-         "https://raw.githubusercontent.com/radian-software/straight.el/develop/install.el"
-         'silent 'inhibit-cookies)
-      (goto-char (point-max))
-      (eval-print-last-sexp)))
-  (load bootstrap-file nil 'nomessage))
+  (defvar bootstrap-version)
+  (let ((bootstrap-file
+         (expand-file-name
+          "straight/repos/straight.el/bootstrap.el"
+          (or (bound-and-true-p straight-base-dir)
+              user-emacs-directory)))
+        (bootstrap-version 7))
+    (unless (file-exists-p bootstrap-file)
+      (with-current-buffer
+          (url-retrieve-synchronously
+           "https://raw.githubusercontent.com/radian-software/straight.el/develop/install.el"
+           'silent 'inhibit-cookies)
+        (goto-char (point-max))
+        (eval-print-last-sexp)))
+    (load bootstrap-file nil 'nomessage))
 #+end_src
 
 ** Install use-package
 #+begin_src emacs-lisp
-(straight-use-package 'use-package)
+  (straight-use-package 'use-package)
 #+end_src
 
 ** Configure straight as default packet manager
 #+begin_src emacs-lisp
-(use-package straight
-  :custom
-  (straight-use-package-by-default t))
+  (use-package straight
+    :custom
+    (straight-use-package-by-default t))
+#+end_src
+
+* Org mode
+
+#+begin_src emacs-lisp
+  (use-package org
+    :straight nil
+    :config
+    (setq org-ellipsis " ▼"
+    	org-hide-emphasis-markers t
+    	org-startup-indented t))
+  (use-package org-bullets
+    :after org
+    :hook (org-mode . org-bullets-mode)
+    :custom
+    (org-bullets-bullet-list '("◉" "○" "●" "○" "●" "○" "●")))
+  (dolist (face '((org-level-1 . 1.2)
+                  (org-level-2 . 1.1)
+                  (org-level-3 . 1.05)
+                  (org-level-4 . 1.0)
+                  (org-level-5 . 1.1)
+                  (org-level-6 . 1.1)
+                  (org-level-7 . 1.1)
+                  (org-level-8 . 1.1)))
+    (set-face-attribute (car face) nil :font "SF Mono" :weight 'medium :height (cdr face)))
+
+  (defun my/org-mode-visual-fill ()
+    (setq visual-fill-column-width 100
+          visual-fill-column-center-text t)
+    (visual-fill-column-mode 1))
+
+  (use-package visual-fill-column
+    :hook (org-mode . my/org-mode-visual-fill))
+
 #+end_src
 
 * Evil Mode
 Evil provides vim keybindings in Emacs.
 
 #+begin_src emacs-lisp
-(use-package evil
-  :config
-  (evil-mode 1))
+  (use-package evil
+    :config
+    (evil-mode 1))
 #+end_src
 
 * Completion
@@ -48,13 +82,13 @@ Evil provides vim keybindings in Emacs.
 Vertico provides a vertical completion UI.
 
 #+begin_src emacs-lisp
-(use-package vertico
-  :init
-  (vertico-mode)
-  :custom
-  (vertico-cycle t)
-  :custom-face
-  (vertico-current ((t (:background "#4f5b66" :foreground "#ffffff")))))
+  (use-package vertico
+    :init
+    (vertico-mode)
+    :custom
+    (vertico-cycle t)
+    :custom-face
+    (vertico-current ((t (:background "#4f5b66" :foreground "#ffffff")))))
 #+end_src
 
 ** Corfu
@@ -158,18 +192,37 @@ Basic UI settings.
   (tool-bar-mode -1)
   (tooltip-mode -1)
   (set-fringe-mode 10)
+  (global-visual-line-mode 1)
 
-  ;; Make ESC quit prompts
   (global-set-key (kbd "<escape>") 'keyboard-escape-quit)
+
+  (set-face-attribute 'default nil :font "SF Mono" :height 140)
 #+end_src
 
 ** Theme
 
 #+begin_src emacs-lisp
-  (add-to-list 'custom-theme-load-path "~/.config/emacs/themes/")
-  (load-theme 'brin t)
-#+end_src
+  (use-package doom-themes
+    :ensure t
+    :config
+    (setq doom-themes-enable-bold t
+          doom-themes-enable-italic t)
+    (load-theme 'doom-badger t)
+    (doom-themes-org-config))
+  (use-package ef-themes)
+  (defun toggle-light-dark-theme ()
+    "toggle between doom-badger (dark) and ef-eagle (light) themes"
+    (interactive)
+    (if (eq (car custom-enabled-themes) 'doom-badger)
+        (progn
+  	(disable-theme 'doom-badger)
+  	(load-theme 'ef-eagle t))
+      (progn
+        (disable-theme 'ef-eagle)
+        (load-theme 'doom-badger t))))
 
+  (global-set-key (kbd "C-c t") 'toggle-light-dark-theme)
+#+end_src
 
 ** Lines numbers
 
@@ -177,6 +230,7 @@ Basic UI settings.
   (setq display-line-numbers-type 'relative)
   (global-display-line-numbers-mode 1)
   (dolist (mode '(term-mode-hook
+  		org-mode-hook
   		shell-mode-hook
   		eshell-mode-hook))
     (add-hook mode (lambda () (display-line-numbers-mode 0))))
@@ -188,8 +242,8 @@ Basic UI settings.
 For YAML file syntax highlighting and editing.
 
 #+begin_src emacs-lisp
-(use-package yaml-mode
-  :mode ("\\.yml\\'" "\\.yaml\\'"))
+  (use-package yaml-mode
+    :mode ("\\.yml\\'" "\\.yaml\\'"))
 #+end_src
 
 ** Terraform Mode
