@@ -3,42 +3,26 @@
 #+PROPERTY: header-args:emacs-lisp :tangle ~/.config/emacs/config.el
 #+OPTIONS: toc:2
 
-* Straight
+* Package Management
 #+begin_src emacs-lisp
-  (defvar bootstrap-version)
-  (let ((bootstrap-file
-         (expand-file-name
-          "straight/repos/straight.el/bootstrap.el"
-          (or (bound-and-true-p straight-base-dir)
-              user-emacs-directory)))
-        (bootstrap-version 7))
-    (unless (file-exists-p bootstrap-file)
-      (with-current-buffer
-          (url-retrieve-synchronously
-           "https://raw.githubusercontent.com/radian-software/straight.el/develop/install.el"
-           'silent 'inhibit-cookies)
-        (goto-char (point-max))
-        (eval-print-last-sexp)))
-    (load bootstrap-file nil 'nomessage))
-#+end_src
+  (require 'package)
+  (add-to-list 'package-archives '("melpa" . "https://melpa.org/packages/"))
+  (add-to-list 'package-archives '("org" . "https://orgmode.org/elpa/"))
+  (package-initialize)
 
-** Install use-package
-#+begin_src emacs-lisp
-  (straight-use-package 'use-package)
-#+end_src
+  ;; Install use-package if not already installed
+  (unless (package-installed-p 'use-package)
+    (package-refresh-contents)
+    (package-install 'use-package))
 
-** Configure straight as default packet manager
-#+begin_src emacs-lisp
-  (use-package straight
-    :custom
-    (straight-use-package-by-default t))
+  (require 'use-package)
+  (setq use-package-always-ensure t)
 #+end_src
 
 * Org mode
-
 #+begin_src emacs-lisp
   (use-package org
-    :straight nil
+    :ensure nil  ; built-in
     :config
     (setq org-ellipsis " ▼"
     	org-hide-emphasis-markers t
@@ -65,12 +49,14 @@
 
   (use-package visual-fill-column
     :hook (org-mode . my/org-mode-visual-fill))
-
 #+end_src
 
-* Evil Mode
-Evil provides vim keybindings in Emacs.
+* Org roam
+#+begin_src emacs-lisp
+  (use-package org-roam)
+#+end_src
 
+* Evil mode
 #+begin_src emacs-lisp
   (use-package evil
     :config
@@ -79,8 +65,6 @@ Evil provides vim keybindings in Emacs.
 
 * Completion
 ** Vertico
-Vertico provides a vertical completion UI.
-
 #+begin_src emacs-lisp
   (use-package vertico
     :init
@@ -92,32 +76,25 @@ Vertico provides a vertical completion UI.
 #+end_src
 
 ** Corfu
-In-buffer completion UI.
-
 #+begin_src emacs-lisp
   (use-package corfu
     :init
     (global-corfu-mode)
     :custom
-    (corfu-auto t)          ;; enable auto completion
-    (corfu-cycle t)         ;; cycle through candidates
+    (corfu-auto t)
+    (corfu-cycle t)
     (corfu-preselect 'first))
 #+end_src
 
 ** Cape
-Additional completion sources for corfu.
-
 #+begin_src emacs-lisp
   (use-package cape
     :init
-    ;; Add to the global default
     (add-to-list 'completion-at-point-functions #'cape-dabbrev)
     (add-to-list 'completion-at-point-functions #'cape-file))
 #+end_src
 
 ** Marginalia
-Rich annotations for completion candidates.
-
 #+begin_src emacs-lisp
   (use-package marginalia
     :init
@@ -125,8 +102,6 @@ Rich annotations for completion candidates.
 #+end_src
 
 ** Consult
-Enhanced commands using completion.
-
 #+begin_src emacs-lisp
   (use-package consult
     :bind
@@ -137,8 +112,6 @@ Enhanced commands using completion.
 #+end_src
 
 ** Orderless
-Flexible completion style.
-
 #+begin_src emacs-lisp
   (use-package orderless
     :custom
@@ -147,7 +120,6 @@ Flexible completion style.
 #+end_src
 
 ** Which-key
-
 #+begin_src emacs-lisp
   (use-package which-key
     :init (which-key-mode)
@@ -155,7 +127,6 @@ Flexible completion style.
 #+end_src
 
 ** Projectile
-
 #+begin_src emacs-lisp
   (use-package projectile
     :diminish projectile-mode
@@ -169,14 +140,12 @@ Flexible completion style.
 #+end_src
 
 ** Counsel-projectile
-
 #+begin_src emacs-lisp
   (use-package counsel-projectile
     :config (counsel-projectile-mode))
 #+end_src
 
 ** Magit
-
 #+begin_src emacs-lisp
   (use-package magit
     :custom
@@ -184,14 +153,12 @@ Flexible completion style.
 #+end_src
 
 * User Interface
-Basic UI settings.
-
 #+begin_src emacs-lisp
   (menu-bar-mode -1)
   (scroll-bar-mode -1)
   (tool-bar-mode -1)
   (tooltip-mode -1)
-  (set-fringe-mode 10)
+  (set-fringe-mode 1)
   (global-visual-line-mode 1)
 
   (global-set-key (kbd "<escape>") 'keyboard-escape-quit)
@@ -199,24 +166,23 @@ Basic UI settings.
   (set-face-attribute 'default nil :font "SF Mono" :height 140)
 #+end_src
 
-** Theme
-
+** Themes
 #+begin_src emacs-lisp
   (use-package doom-themes
-    :ensure t
     :config
     (setq doom-themes-enable-bold t
           doom-themes-enable-italic t)
-    (load-theme 'doom-badger t)
     (doom-themes-org-config))
-  (use-package ef-themes)
+  (use-package ef-themes
+    :config
+    (load-theme 'ef-eagle t))
   (defun toggle-light-dark-theme ()
     "toggle between doom-badger (dark) and ef-eagle (light) themes"
     (interactive)
     (if (eq (car custom-enabled-themes) 'doom-badger)
         (progn
-  	(disable-theme 'doom-badger)
-  	(load-theme 'ef-eagle t))
+    	(disable-theme 'doom-badger)
+    	(load-theme 'ef-eagle t))
       (progn
         (disable-theme 'ef-eagle)
         (load-theme 'doom-badger t))))
@@ -224,8 +190,7 @@ Basic UI settings.
   (global-set-key (kbd "C-c t") 'toggle-light-dark-theme)
 #+end_src
 
-** Lines numbers
-
+** Line numbers
 #+begin_src emacs-lisp
   (setq display-line-numbers-type 'relative)
   (global-display-line-numbers-mode 1)
@@ -237,24 +202,18 @@ Basic UI settings.
 #+end_src
 
 * Modes
-
 ** YAML Mode
-For YAML file syntax highlighting and editing.
-
 #+begin_src emacs-lisp
   (use-package yaml-mode
     :mode ("\\.yml\\'" "\\.yaml\\'"))
 #+end_src
 
 ** Terraform Mode
-
 #+begin_src emacs-lisp
-  (use-package terraform-mode
-    :straight t)
+  (use-package terraform-mode)
 #+end_src
 
 ** Nix Mode
-
 #+begin_src emacs-lisp
   (use-package nix-mode
     :mode "\\.nix\\'")
